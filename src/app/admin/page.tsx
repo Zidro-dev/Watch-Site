@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { PrismaClient } from "@prisma/client";
 import { Users, Mic2, Film, PlayCircle } from "lucide-react";
 
