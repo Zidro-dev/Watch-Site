@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { Play } from "lucide-react";
@@ -39,7 +41,7 @@ export default async function SimulcastPage() {
                 </div>
                 {anime.episodes.length > 0 && (
                   <Link 
-                    href={`/anime/${anime.id}/episode/${anime.episodes[0].id}`}
+                    href={`/watch/${anime.episodes[0].id}`}
                     className="flex items-center space-x-2 text-sm font-medium hover:text-primary transition mt-2"
                   >
                     <Play className="h-4 w-4" />

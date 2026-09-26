@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { PrismaClient } from "@prisma/client";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
