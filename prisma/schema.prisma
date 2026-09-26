@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  FREE
+  PREMIUM
+  ADMIN
+  FANDUB_CREATOR
+}
+
+enum Status {
+  ONGOING
+  COMPLETED
+  UPCOMING
+}
+
+enum AudioSource {
+  OFFICIAL
+  FANDUB
+}
+
+model User {
+  id           String          @id
+  email        String          @unique
+  username     String?         @unique
+  fullName     String?
+  avatarUrl    String?
+  role         Role            @default(FREE)
+  preferences  String?
+  watchProgress WatchProgress[]
+  audioTracks  AudioTrack[]
+  watchlists   Watchlist[]
+  reviews      Review[]
+  notifications Notification[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Anime {
+  id           String      @id @default(uuid())
+  title        String
+  description  String?
+  coverImage   String?
+  releaseYear  Int?
+  status       Status      @default(ONGOING)
+  tags         String[]
+  episodes     Episode[]
+  watchlists   Watchlist[]
+  reviews      Review[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Watchlist {
+  id        String   @id @default(uuid())
+  userId    String
+  animeId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, animeId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  animeId   String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+}
+
+model Episode {
+  id             String           @id @default(uuid())
+  animeId        String
+  episodeNumber  Int
+  title          String?
+  videoUrl       String
+  isPremiumOnly  Boolean          @default(false)
+  releaseDate    DateTime?
+  
+  anime          Anime            @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  audioTracks    AudioTrack[]
+  subtitleTracks SubtitleTrack[]
+  watchProgress  WatchProgress[]
+  
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([animeId, episodeNumber])
+}
+
+model WatchProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  episodeId   String
+  timestamp   Float
+  isCompleted Boolean  @default(false)
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode     Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, episodeId])
+}
+
+model AudioTrack {
+  id          String      @id @default(uuid())
+  episodeId   String
+  language    String
+  source      AudioSource @default(OFFICIAL)
+  url         String
+  creatorId   String?
+  isApproved  Boolean     @default(false) // Added for Fandub moderation
+  
+  episode     Episode     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  creator     User?       @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model SubtitleTrack {
+  id        String   @id @default(uuid())
+  episodeId String
+  language  String
+  url       String
+  
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
