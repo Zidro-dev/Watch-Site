@@ -6,12 +6,18 @@ import { Users, Mic2, Film, PlayCircle } from "lucide-react";
 
 
 export default async function AdminOverview() {
-  const [userCount, animeCount, episodeCount, pendingTracks] = await Promise.all([
-    prisma.user.count(),
-    prisma.anime.count(),
-    prisma.episode.count(),
-    prisma.audioTrack.count({ where: { isApproved: false, source: "FANDUB" } })
-  ]);
+  let userCount = 0, animeCount = 0, episodeCount = 0, pendingTracks = 0;
+  
+  try {
+    [userCount, animeCount, episodeCount, pendingTracks] = await Promise.all([
+      prisma.user.count(),
+      prisma.anime.count(),
+      prisma.episode.count(),
+      prisma.audioTrack.count({ where: { isApproved: false, source: "FANDUB" } })
+    ]);
+  } catch (error) {
+    console.error("Prisma error in AdminOverview:", error);
+  }
 
   return (
     <div className="space-y-6">

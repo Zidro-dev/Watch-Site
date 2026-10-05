@@ -9,45 +9,58 @@ import { createClient } from "@/utils/supabase/server";
 
 export default async function Home() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error("Supabase error in Home:", error);
+  }
 
-  // 1. Newly Added (Latest 10 anime)
-  const newlyAdded = await prisma.anime.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 10,
-  });
-
-  // 2. Top Rated (Anime with most/highest reviews - for simplicity we just sort by those with most reviews)
-  const topRated = await prisma.anime.findMany({
-    orderBy: {
-      reviews: {
-        _count: "desc"
-      }
-    },
-    take: 10,
-  });
-
-  // 3. Continue Watching (Only if user is logged in)
+  let newlyAdded: any[] = [];
+  let topRated: any[] = [];
   let continueWatching: any[] = [];
-  if (user) {
-    const progress = await prisma.watchProgress.findMany({
-      where: { userId: user.id },
-      include: {
-        episode: {
-          include: { anime: true }
-        }
-      },
-      orderBy: { updatedAt: "desc" },
+
+  try {
+    // 1. Newly Added (Latest 10 anime)
+    newlyAdded = await prisma.anime.findMany({
+      orderBy: { createdAt: "desc" },
       take: 10,
     });
-    
-    // Map to AnimeCard format expected by CategoryRow
-    continueWatching = progress.map(p => ({
-      id: p.episode.anime.id, // Linking back to Anime
-      title: `Ep ${p.episode.episodeNumber} - ${p.episode.anime.title}`,
-      coverImage: p.episode.anime.coverImage,
-      isPremium: p.episode.isPremiumOnly,
-    }));
+
+    // 2. Top Rated 
+    topRated = await prisma.anime.findMany({
+      orderBy: {
+        reviews: {
+          _count: "desc"
+        }
+      },
+      take: 10,
+    });
+
+    // 3. Continue Watching (Only if user is logged in)
+    if (user) {
+      const progress = await prisma.watchProgress.findMany({
+        where: { userId: user.id },
+        include: {
+          episode: {
+            include: { anime: true }
+          }
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+      });
+      
+      continueWatching = progress.map(p => ({
+        id: p.episode.anime.id, 
+        title: `Ep ${p.episode.episodeNumber} - ${p.episode.anime.title}`,
+        coverImage: p.episode.anime.coverImage,
+        isPremium: p.episode.isPremiumOnly,
+      }));
+    }
+  } catch (error) {
+    console.error("Prisma error in Home:", error);
   }
 
   // Format arrays for CategoryRow

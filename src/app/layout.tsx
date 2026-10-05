@@ -19,22 +19,34 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error("Supabase getUser error in RootLayout:", error);
+  }
 
   let notifications: any[] = [];
   let dbUser = null;
+  
   if (user) {
-    const { prisma } = await import("@/utils/prisma");
-    
-    dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    });
+    try {
+      const { prisma } = await import("@/utils/prisma");
+      
+      dbUser = await prisma.user.findUnique({
+        where: { id: user.id }
+      });
 
-    notifications = await prisma.notification.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 20
-    });
+      notifications = await prisma.notification.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take: 20
+      });
+    } catch (error) {
+      console.error("Prisma query error in RootLayout:", error);
+    }
   }
 
   return (

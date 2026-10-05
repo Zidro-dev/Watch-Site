@@ -14,16 +14,27 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error("Supabase error in AdminLayout:", error);
+  }
 
   if (!user) {
     redirect("/login");
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { role: true },
-  });
+  let dbUser = null;
+  try {
+    dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true },
+    });
+  } catch (error) {
+    console.error("Prisma error in AdminLayout:", error);
+  }
 
   if (!dbUser || dbUser.role !== "ADMIN") {
     return (

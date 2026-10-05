@@ -4,15 +4,16 @@ import { cookies } from "next/headers";
 export function createClient() {
   const cookieStore = cookies();
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fallback.supabase.co";
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "fallback-key";
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error(
-      "Missing Supabase Environment Variables: Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your .env.local file."
-    );
+    console.error("Missing Supabase Env Variables. Using fallback.");
   }
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
