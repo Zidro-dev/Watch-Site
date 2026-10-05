@@ -33,6 +33,8 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
   // Track Selection State
   const [selectedAudioId, setSelectedAudioId] = useState<string>("base");
   const [selectedSubId, setSelectedSubId] = useState<string>("none");
+  const [quality, setQuality] = useState<string>("1080p");
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
   // Syncing external audio track with video
   useEffect(() => {
@@ -74,10 +76,17 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
 
   // Set initial time on mount
   useEffect(() => {
-    if (videoRef.current && initialTime > 0) {
+    if (videoRef.current) {
+      // Check local storage as a fallback for guests
+      let startAt = initialTime;
+      if (initialTime === 0) {
+        const localProg = localStorage.getItem(`progress_${videoUrl}`);
+        if (localProg) startAt = parseFloat(localProg);
+      }
+
       const handleLoadedMetadata = () => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = initialTime;
+        if (videoRef.current && startAt > 0) {
+          videoRef.current.currentTime = startAt;
         }
       };
       videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -85,7 +94,7 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
         if (videoRef.current) videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
       };
     }
-  }, [initialTime]);
+  }, [initialTime, videoUrl]);
 
   // Handle saving progress and Skip Intro button
   const lastSavedTime = useRef<number>(0);
@@ -97,9 +106,12 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
       // Show skip intro button between 10s and 95s
       setShowSkipIntro(current > 10 && current < 95);
 
-      if (onProgressSave && current - lastSavedTime.current > 10) {
+      if (current - lastSavedTime.current > 5) {
         lastSavedTime.current = current;
-        onProgressSave(current);
+        // Save to local storage
+        localStorage.setItem(`progress_${videoUrl}`, current.toString());
+        // Save to API
+        if (onProgressSave) onProgressSave(current);
       }
     }
   };
@@ -148,9 +160,12 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
 
   return (
     <div 
-      className="relative group w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center"
+      className="relative group w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center font-sans"
       onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
+      onMouseLeave={() => {
+        setShowControls(false);
+        setShowSettingsMenu(false);
+      }}
     >
       <video
         ref={videoRef}
@@ -165,6 +180,7 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
             key={sub.id}
             kind="subtitles"
             srcLang={sub.language}
+            label={sub.language}
             src={sub.url}
             default={selectedSubId === sub.id}
           />
@@ -180,17 +196,17 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
           className="absolute bottom-24 right-8 bg-white/20 hover:bg-white/40 backdrop-blur-md border border-white/20 text-white font-bold py-2 px-6 rounded-md shadow-lg transition-all flex items-center z-40"
         >
           <FastForward className="w-5 h-5 mr-2" />
-          Skip Intro
+          Skip Intro (85s)
         </button>
       )}
 
       {/* Controls Overlay */}
       <div 
-        className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}
+        className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}
       >
         <div className="w-full h-1 bg-white/30 mb-4 cursor-pointer relative rounded">
           <div 
-            className="absolute top-0 left-0 h-full bg-primary rounded"
+            className="absolute top-0 left-0 h-full bg-primary rounded transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -212,19 +228,19 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
             </button>
           </div>
 
-          <div className="flex items-center space-x-4 md:space-x-6">
+          <div className="flex items-center space-x-4 md:space-x-6 relative">
             
             {/* Speed Selector */}
-            <div className="relative group/menu hidden sm:block">
+            <div className="relative group/speed hidden sm:block">
               <button className="text-white text-sm font-semibold hover:text-primary transition">
                 {playbackSpeed}x
               </button>
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover/menu:block bg-black/90 backdrop-blur-md border border-white/10 rounded shadow-lg min-w-[80px] overflow-hidden">
+              <div className="absolute bottom-full right-0 mb-4 hidden group-hover/speed:block bg-black/90 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl min-w-[100px] overflow-hidden">
                 {[1, 1.25, 1.5, 2].map(speed => (
                   <button 
                     key={speed}
                     onClick={() => changeSpeed(speed)}
-                    className={`block w-full text-left px-4 py-2 text-sm ${playbackSpeed === speed ? "text-primary bg-white/5" : "text-white"} hover:bg-white/10`}
+                    className={`block w-full text-left px-4 py-3 text-sm transition-colors ${playbackSpeed === speed ? "text-primary bg-white/10 font-bold" : "text-white"} hover:bg-white/20`}
                   >
                     {speed}x
                   </button>
@@ -232,28 +248,78 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
               </div>
             </div>
 
-            {/* Audio Track Selector */}
-            <div className="relative group/menu">
-              <button className="text-white text-sm font-semibold flex items-center space-x-1 hover:text-primary transition">
-                <Settings className="w-5 h-5 md:w-6 md:h-6 sm:mr-1" /> <span className="hidden sm:inline">Audio</span>
+            {/* Main Settings Menu */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                className="text-white hover:text-primary transition p-1"
+              >
+                <Settings className={`w-5 h-5 md:w-6 md:h-6 transition-transform ${showSettingsMenu ? 'rotate-90 text-primary' : ''}`} />
               </button>
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover/menu:block bg-black/90 backdrop-blur-md border border-white/10 rounded shadow-lg min-w-[160px] overflow-hidden">
-                <button 
-                  onClick={() => setSelectedAudioId("base")}
-                  className={`block w-full text-left px-4 py-2 text-sm ${selectedAudioId === "base" ? "text-primary bg-white/5" : "text-white"} hover:bg-white/10`}
-                >
-                  Original (JP)
-                </button>
-                {audioTracks.map(track => (
-                  <button 
-                    key={track.id}
-                    onClick={() => setSelectedAudioId(track.id)}
-                    className={`block w-full text-left px-4 py-2 text-sm ${selectedAudioId === track.id ? "text-primary bg-white/5" : "text-white"} hover:bg-white/10`}
-                  >
-                    {track.language} {track.source === "FANDUB" && <span className="text-[10px] text-gray-400 block">Fandub</span>}
-                  </button>
-                ))}
-              </div>
+              
+              {showSettingsMenu && (
+                <div className="absolute bottom-full right-0 mb-4 bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl w-64 max-h-[300px] overflow-y-auto flex flex-col z-50 divide-y divide-white/5">
+                  
+                  {/* Quality Selection */}
+                  <div className="p-3">
+                    <p className="text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">Quality</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["Auto", "1080p", "720p", "480p"].map(q => (
+                        <button 
+                          key={q}
+                          onClick={() => { setQuality(q); setShowSettingsMenu(false); }}
+                          className={`px-3 py-1 text-xs rounded-full border transition-colors ${quality === q ? "bg-primary border-primary text-white" : "border-white/20 text-gray-300 hover:border-white/50"}`}
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Audio Selection */}
+                  <div className="p-3">
+                    <p className="text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">Audio Track</p>
+                    <button 
+                      onClick={() => setSelectedAudioId("base")}
+                      className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${selectedAudioId === "base" ? "bg-primary/20 text-primary font-medium" : "text-gray-200 hover:bg-white/10"}`}
+                    >
+                      Original (Japanese)
+                    </button>
+                    {audioTracks.map(track => (
+                      <button 
+                        key={track.id}
+                        onClick={() => setSelectedAudioId(track.id)}
+                        className={`block w-full text-left px-3 py-2 rounded-md text-sm mt-1 transition-colors ${selectedAudioId === track.id ? "bg-primary/20 text-primary font-medium" : "text-gray-200 hover:bg-white/10"}`}
+                      >
+                        {track.language} {track.source === "FANDUB" && <span className="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Fandub</span>}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Subtitle Selection */}
+                  {subtitleTracks.length > 0 && (
+                    <div className="p-3">
+                      <p className="text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">Subtitles</p>
+                      <button 
+                        onClick={() => setSelectedSubId("none")}
+                        className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${selectedSubId === "none" ? "bg-primary/20 text-primary font-medium" : "text-gray-200 hover:bg-white/10"}`}
+                      >
+                        None
+                      </button>
+                      {subtitleTracks.map(track => (
+                        <button 
+                          key={track.id}
+                          onClick={() => setSelectedSubId(track.id)}
+                          className={`block w-full text-left px-3 py-2 rounded-md text-sm mt-1 transition-colors ${selectedSubId === track.id ? "bg-primary/20 text-primary font-medium" : "text-gray-200 hover:bg-white/10"}`}
+                        >
+                          {track.language}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+              )}
             </div>
 
             <button className="text-white hover:text-primary transition">

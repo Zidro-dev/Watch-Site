@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Stream anime with official and fandub audio tracks.",
 };
 
+import GlobalSearch from "@/components/ui/GlobalSearch";
+
 export default async function RootLayout({
   children,
 }: {
@@ -53,6 +55,7 @@ export default async function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} min-h-screen bg-background font-sans antialiased`}>
         <Navbar user={user} dbUser={dbUser} notifications={notifications} />
+        <GlobalSearch />
         <main className="relative flex min-h-screen flex-col">
           {children}
         </main>

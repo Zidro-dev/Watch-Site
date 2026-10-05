@@ -6,8 +6,45 @@ import WatchPlayerClient from "./WatchPlayerClient";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
+import type { Metadata } from "next";
 
+export async function generateMetadata({ params }: { params: { episodeId: string } }): Promise<Metadata> {
+  const episode = await prisma.episode.findUnique({
+    where: { id: params.episodeId },
+    include: { anime: true }
+  });
 
+  if (!episode) {
+    return { title: "Episode Not Found - AniZone" };
+  }
+
+  const title = `Watch ${episode.anime.title} - Episode ${episode.episodeNumber}`;
+  const desc = `Stream Episode ${episode.episodeNumber} of ${episode.anime.title} with multiple audio tracks and subtitles on AniZone.`;
+
+  return {
+    title: `${title} | AniZone`,
+    description: desc,
+    openGraph: {
+      title: title,
+      description: desc,
+      images: [
+        {
+          url: episode.anime.coverImage || "",
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      type: "video.episode",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: title,
+      description: desc,
+      images: [episode.anime.coverImage || ""],
+    }
+  };
+}
 
 export default async function WatchPage({ params }: { params: { episodeId: string } }) {
   const supabase = createClient();

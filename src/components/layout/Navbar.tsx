@@ -67,13 +67,15 @@ export default function Navbar({ user, dbUser, notifications = [] }: { user: any
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
-          <div className="hidden sm:flex items-center relative">
-            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
-            <input
-              type="search"
-              placeholder="Search anime..."
-              className="h-9 w-40 lg:w-64 rounded-full border border-white/10 bg-white/5 px-9 py-1 text-sm text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
-            />
+          <div className="hidden sm:flex items-center">
+            <button 
+              onClick={() => document.dispatchEvent(new CustomEvent('open-search'))}
+              className="flex items-center space-x-2 bg-secondary/50 hover:bg-secondary border border-white/10 text-muted-foreground px-4 py-1.5 rounded-full transition-colors mr-2"
+            >
+              <Search className="h-4 w-4" />
+              <span className="text-sm">Search...</span>
+              <kbd className="ml-2 hidden lg:inline-block bg-black/50 px-1.5 py-0.5 rounded text-[10px] font-mono border border-white/10">Ctrl K</kbd>
+            </button>
           </div>
           
           <Link href="/premium" className="hidden lg:block text-primary font-semibold text-sm hover:underline">
