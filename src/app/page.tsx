@@ -2,10 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import Hero from "@/components/home/Hero";
 import CategoryRow from "@/components/home/CategoryRow";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+
 
 export default async function Home() {
   const supabase = createClient();

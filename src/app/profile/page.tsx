@@ -1,13 +1,13 @@
 export const dynamic = 'force-dynamic';
 
 import { createClient } from "@/utils/supabase/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { redirect } from "next/navigation";
 import { User as UserIcon, Mail, Shield, Crown, Film } from "lucide-react";
 import Link from "next/link";
 import AvatarUploadClient from "./AvatarUploadClient";
 
-const prisma = new PrismaClient();
+
 
 export default async function ProfilePage() {
   const supabase = createClient();

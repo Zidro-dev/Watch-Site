@@ -1,10 +1,10 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { redirect } from "next/navigation";
 
-const prisma = new PrismaClient();
+
 
 export async function registerUser(formData: FormData) {
   const email = formData.get("email") as string;

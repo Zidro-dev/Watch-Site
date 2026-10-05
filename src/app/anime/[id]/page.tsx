@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Play, Calendar, Tag } from "lucide-react";
@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 import { WatchlistButton, ReviewsSection } from "./AnimeClientFeatures";
 import type { Metadata } from "next";
 
-const prisma = new PrismaClient();
+
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const anime = await prisma.anime.findUnique({

@@ -1,13 +1,16 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import ContentFormsClient from "./ContentFormsClient";
 
-const prisma = new PrismaClient();
+
 
 export default async function ContentManagementPage() {
+  // Optimization: Fetch top 150 most recently updated animes to prevent UI lag with 10k+ records
   const animes = await prisma.anime.findMany({
-    select: { id: true, title: true }
+    select: { id: true, title: true },
+    orderBy: { updatedAt: "desc" },
+    take: 150
   });
 
   return (

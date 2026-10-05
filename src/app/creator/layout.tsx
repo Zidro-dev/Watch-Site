@@ -2,10 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 
 // Initialize Prisma (ideally this should be in a separate lib/prisma.ts file)
-const prisma = new PrismaClient();
+
 
 export default async function CreatorLayout({
   children,

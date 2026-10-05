@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { Users, Mic2, Film, PlayCircle } from "lucide-react";
 
-const prisma = new PrismaClient();
+
 
 export default async function AdminOverview() {
   const [userCount, animeCount, episodeCount, pendingTracks] = await Promise.all([

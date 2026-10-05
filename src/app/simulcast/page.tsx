@@ -1,10 +1,10 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import Link from "next/link";
 import { Play } from "lucide-react";
 
-const prisma = new PrismaClient();
+
 
 export default async function SimulcastPage() {
   // Fetching ONGOING anime or recent episodes (Simulating Simulcast logic)
@@ -15,7 +15,8 @@ export default async function SimulcastPage() {
         orderBy: { createdAt: "desc" },
         take: 1
       }
-    }
+    },
+    take: 30
   });
 
   return (

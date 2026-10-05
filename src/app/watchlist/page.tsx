@@ -1,12 +1,12 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Bookmark, Play } from "lucide-react";
 
-const prisma = new PrismaClient();
+
 
 export default async function WatchlistPage() {
   const supabase = createClient();

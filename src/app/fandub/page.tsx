@@ -1,19 +1,25 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { Mic2, Music } from "lucide-react";
 import Link from "next/link";
 import CreatorStudioClient from "./CreatorStudioClient";
 
-const prisma = new PrismaClient();
+
 
 export default async function FandubPortalPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   // Fetch Anime and their Episodes for the form dropdowns
+  // Optimization: Only fetch animes that actually have episodes uploaded to the platform
   const animes = await prisma.anime.findMany({
+    where: {
+      episodes: {
+        some: {}
+      }
+    },
     select: {
       id: true,
       title: true,

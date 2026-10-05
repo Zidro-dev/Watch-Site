@@ -24,8 +24,7 @@ export default async function RootLayout({
   let notifications: any[] = [];
   let dbUser = null;
   if (user) {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
+    const { prisma } = await import("@/utils/prisma");
     
     dbUser = await prisma.user.findUnique({
       where: { id: user.id }

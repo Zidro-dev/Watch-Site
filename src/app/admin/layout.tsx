@@ -2,11 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import Link from "next/link";
 import { LayoutDashboard, Mic2, Film } from "lucide-react";
 
-const prisma = new PrismaClient();
+
 
 export default async function AdminLayout({
   children,

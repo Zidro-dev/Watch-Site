@@ -1,9 +1,9 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
 
-const prisma = new PrismaClient();
+
 
 export async function toggleWatchlist(userId: string, animeId: string) {
   if (!userId || !animeId) return { success: false, error: "Missing data" };

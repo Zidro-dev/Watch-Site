@@ -1,9 +1,9 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
 
-const prisma = new PrismaClient();
+
 
 // Moderation Actions
 export async function moderateFandubTrack(trackId: string, action: "APPROVE" | "REJECT" | "DELETE") {

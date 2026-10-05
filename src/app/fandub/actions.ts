@@ -1,11 +1,11 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
 
 import { uploadFileToSupabase } from "@/utils/storage";
 
-const prisma = new PrismaClient();
+
 
 export async function submitFandubTrack(formData: FormData) {
   try {

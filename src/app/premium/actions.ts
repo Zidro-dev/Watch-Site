@@ -1,10 +1,10 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
 
-const prisma = new PrismaClient();
+
 
 export async function upgradeToPremium() {
   const supabase = createClient();

@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import FandubRowClient from "./FandubRowClient";
 
-const prisma = new PrismaClient();
+
 
 export default async function FandubTableServer() {
   const pendingTracks = await prisma.audioTrack.findMany({

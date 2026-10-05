@@ -1,13 +1,13 @@
 export const dynamic = 'force-dynamic';
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import { notFound } from "next/navigation";
 import WatchPlayerClient from "./WatchPlayerClient";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+
 
 export default async function WatchPage({ params }: { params: { episodeId: string } }) {
   const supabase = createClient();
