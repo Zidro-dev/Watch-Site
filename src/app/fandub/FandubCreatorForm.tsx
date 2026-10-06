@@ -127,28 +127,49 @@ export default function FandubCreatorForm({ animes, userId }: { animes: AnimeWit
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">Audio File (MP3, WAV)</label>
-        <div className="w-full bg-white/5 border border-white/10 rounded-lg p-2 focus-within:border-primary transition">
+        <label className="block text-sm font-medium text-gray-300 mb-1.5">Audio File (MP3, WAV, M4A)</label>
+        <div className="w-full bg-white/5 border border-white/10 rounded-lg p-2 focus-within:border-primary transition border-dashed hover:border-primary/50 cursor-pointer">
           <input 
             type="file" 
             name="audioFile" 
-            accept="audio/mp3, audio/wav, audio/mpeg"
+            accept="audio/mp3, audio/wav, audio/mpeg, audio/mp4"
             required 
             className="w-full text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 cursor-pointer"
           />
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          *Maximum file size: 50MB. This file will be uploaded securely to our servers.
+          *Required. Maximum file size: 50MB. Ensure it's perfectly synced to the original Japanese video track.
         </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1.5">Subtitle File (SRT, VTT) <span className="text-gray-500 text-xs ml-1">(Optional)</span></label>
+        <div className="w-full bg-white/5 border border-white/10 rounded-lg p-2 focus-within:border-primary transition border-dashed hover:border-primary/50 cursor-pointer">
+          <input 
+            type="file" 
+            name="subtitleFile" 
+            accept=".vtt, .srt"
+            className="w-full text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer"
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1.5">Voice Actors Cast <span className="text-gray-500 text-xs ml-1">(Optional)</span></label>
+        <textarea 
+          name="voiceActors" 
+          placeholder="E.g., Eren - John Doe, Mikasa - Jane Doe..."
+          className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition min-h-[80px]"
+        />
       </div>
 
       <button 
         type="submit" 
         disabled={isSubmitting}
-        className="w-full mt-4 bg-primary text-white font-bold py-3.5 rounded-lg hover:bg-primary/90 transition shadow-lg hover:shadow-primary/40 flex justify-center items-center disabled:opacity-50"
+        className="w-full mt-6 bg-primary text-white font-bold py-3.5 rounded-lg hover:bg-primary/90 transition shadow-[0_0_15px_rgba(229,9,20,0.3)] hover:shadow-[0_0_25px_rgba(229,9,20,0.5)] flex justify-center items-center disabled:opacity-50"
       >
         {isSubmitting ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}
-        {isSubmitting ? "Uploading File... Please wait" : "Upload & Submit Track"}
+        {isSubmitting ? "Uploading & Processing... Please wait" : "Submit to Moderation"}
       </button>
     </form>
   );

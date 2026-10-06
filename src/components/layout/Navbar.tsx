@@ -102,7 +102,8 @@ export default function Navbar({ user, dbUser, notifications = [] }: { user: any
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 rounded-md bg-black/90 backdrop-blur-md border border-white/10 shadow-lg py-1 z-50">
                   <div className="px-4 py-2 border-b border-white/10 mb-1">
-                    <p className="text-sm font-medium text-white truncate">{user.email}</p>
+                    <p className="text-sm font-medium text-white truncate">{dbUser?.fullName || user.email}</p>
+                    <p className="text-xs text-primary font-bold mt-1 uppercase tracking-wider">{dbUser?.role || "USER"}</p>
                   </div>
                   <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition">
                     My Profile

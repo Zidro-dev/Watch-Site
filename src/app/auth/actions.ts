@@ -81,3 +81,48 @@ export async function loginUser(formData: FormData) {
 
   redirect("/");
 }
+
+export async function demoLoginUser(role: "USER" | "CREATOR" | "ADMIN") {
+  const email = `${role.toLowerCase()}@anizone.com`;
+  const password = "demoPassword123!";
+  const username = `demo_${role.toLowerCase()}`;
+  const fullName = `Demo ${role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()}`;
+  
+  const supabase = createClient();
+  
+  // Try to login first
+  const { error: loginError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (loginError) {
+    // If login fails, they probably don't exist yet, so register them!
+    const { data: authData, error: signupError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    
+    if (signupError) return { error: signupError.message };
+    
+    if (authData.user) {
+      try {
+        await prisma.user.upsert({
+          where: { id: authData.user.id },
+          update: {},
+          create: {
+            id: authData.user.id,
+            email: authData.user.email!,
+            username,
+            fullName,
+            role: role === "CREATOR" ? "FANDUB_CREATOR" : role === "ADMIN" ? "ADMIN" : "FREE",
+          },
+        });
+      } catch (e) {
+        console.error("Failed to seed demo user in Prisma:", e);
+      }
+    }
+  }
+
+  redirect("/");
+}
