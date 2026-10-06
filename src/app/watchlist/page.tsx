@@ -16,13 +16,18 @@ export default async function WatchlistPage() {
     redirect("/login");
   }
 
-  const watchlists = await prisma.watchlist.findMany({
-    where: { userId: user.id },
-    include: {
-      anime: true,
-    },
-    orderBy: { createdAt: "desc" }
-  });
+  let watchlists: any[] = [];
+  try {
+    watchlists = await prisma.watchlist.findMany({
+      where: { userId: user.id },
+      include: {
+        anime: true,
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  } catch (error) {
+    console.error("Prisma error in WatchlistPage:", error);
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-8 pt-24 pb-12 min-h-screen">

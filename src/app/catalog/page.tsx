@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 
 
+import { fallbackAnimes } from "@/utils/fallback-data";
+
 export default async function CatalogPage({
   searchParams,
 }: {
@@ -20,22 +22,35 @@ export default async function CatalogPage({
     ? { title: { contains: query, mode: "insensitive" as const } }
     : {};
 
-  const [animes, totalCount] = await Promise.all([
-    prisma.anime.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        title: true,
-        coverImage: true,
-        releaseYear: true,
-        status: true,
-      },
-      orderBy: query ? undefined : { createdAt: "desc" },
-      take,
-      skip,
-    }),
-    prisma.anime.count({ where: whereClause }),
-  ]);
+  let animes: any[] = [];
+  let totalCount = 0;
+
+  try {
+    [animes, totalCount] = await Promise.all([
+      prisma.anime.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          coverImage: true,
+          releaseYear: true,
+          status: true,
+        },
+        orderBy: query ? undefined : { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      prisma.anime.count({ where: whereClause }),
+    ]);
+  } catch (error) {
+    console.error("Prisma error in Catalog:", error);
+  }
+
+  // Use fallback if empty
+  if (animes.length === 0 && !query) {
+    animes = fallbackAnimes;
+    totalCount = fallbackAnimes.length;
+  }
 
   const totalPages = Math.ceil(totalCount / take);
 

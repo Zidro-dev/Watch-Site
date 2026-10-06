@@ -7,6 +7,8 @@ import { createClient } from "@/utils/supabase/server";
 
 
 
+import { fallbackAnimes, fallbackWatchProgress } from "@/utils/fallback-data";
+
 export default async function Home() {
   const supabase = createClient();
   let user = null;
@@ -23,30 +25,23 @@ export default async function Home() {
   let continueWatching: any[] = [];
 
   try {
-    // 1. Newly Added (Latest 10 anime)
     newlyAdded = await prisma.anime.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
     });
 
-    // 2. Top Rated 
     topRated = await prisma.anime.findMany({
       orderBy: {
-        reviews: {
-          _count: "desc"
-        }
+        reviews: { _count: "desc" }
       },
       take: 10,
     });
 
-    // 3. Continue Watching (Only if user is logged in)
     if (user) {
       const progress = await prisma.watchProgress.findMany({
         where: { userId: user.id },
         include: {
-          episode: {
-            include: { anime: true }
-          }
+          episode: { include: { anime: true } }
         },
         orderBy: { updatedAt: "desc" },
         take: 10,
@@ -60,7 +55,19 @@ export default async function Home() {
       }));
     }
   } catch (error) {
-    console.error("Prisma error in Home:", error);
+    console.error("Prisma error in Home, using fallback:", error);
+  }
+
+  // Use fallback if empty
+  if (newlyAdded.length === 0) newlyAdded = fallbackAnimes;
+  if (topRated.length === 0) topRated = [...fallbackAnimes].reverse();
+  if (continueWatching.length === 0 && !user) {
+    continueWatching = fallbackWatchProgress.map(p => ({
+      id: p.episode.anime.id,
+      title: `Ep ${p.episode.episodeNumber} - ${p.episode.anime.title}`,
+      coverImage: p.episode.anime.coverImage,
+      isPremium: false,
+    }));
   }
 
   // Format arrays for CategoryRow

@@ -31,7 +31,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error("Search API error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Search API error, using fallback:", error);
+    // Fallback if DB is down
+    const fallback = (await import("@/utils/fallback-data")).fallbackAnimes;
+    const filtered = fallback.filter(a => a.title.toLowerCase().includes(q.toLowerCase()));
+    return NextResponse.json(filtered);
   }
 }

@@ -6,18 +6,31 @@ import { Play } from "lucide-react";
 
 
 
+import { fallbackAnimes } from "@/utils/fallback-data";
+
 export default async function SimulcastPage() {
-  // Fetching ONGOING anime or recent episodes (Simulating Simulcast logic)
-  const animes = await prisma.anime.findMany({
-    where: { status: "ONGOING" },
-    include: {
-      episodes: {
-        orderBy: { createdAt: "desc" },
-        take: 1
-      }
-    },
-    take: 30
-  });
+  let animes: any[] = [];
+  try {
+    animes = await prisma.anime.findMany({
+      where: { status: "ONGOING" },
+      include: {
+        episodes: {
+          orderBy: { createdAt: "desc" },
+          take: 1
+        }
+      },
+      take: 30
+    });
+  } catch (error) {
+    console.error("Prisma error in Simulcast:", error);
+  }
+
+  if (animes.length === 0) {
+    animes = fallbackAnimes.filter(a => a.status === "ONGOING").map(a => ({
+      ...a,
+      episodes: [{ id: `ep-fb-${a.id}`, episodeNumber: 1 }]
+    }));
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-8 pt-24 pb-12 min-h-screen">

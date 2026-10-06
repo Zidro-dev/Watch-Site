@@ -8,44 +8,60 @@ import CreatorStudioClient from "./CreatorStudioClient";
 
 
 
+import { fallbackAnimes } from "@/utils/fallback-data";
+
 export default async function FandubPortalPage() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error("Supabase user error in Fandub:", error);
+  }
 
-  // Fetch Anime and their Episodes for the form dropdowns
-  // Optimization: Only fetch animes that actually have episodes uploaded to the platform
-  const animes = await prisma.anime.findMany({
-    where: {
-      episodes: {
-        some: {}
-      }
-    },
-    select: {
-      id: true,
-      title: true,
-      episodes: {
-        select: {
-          id: true,
-          episodeNumber: true,
-          title: true,
-        },
-        orderBy: { episodeNumber: "asc" }
-      }
-    },
-    orderBy: { title: "asc" }
-  });
-
+  let animes: any[] = [];
   let myTracks: any[] = [];
-  if (user) {
-    myTracks = await prisma.audioTrack.findMany({
-      where: { creatorId: user.id },
-      include: {
-        episode: {
-          include: { anime: true }
+
+  try {
+    animes = await prisma.anime.findMany({
+      where: {
+        episodes: { some: {} }
+      },
+      select: {
+        id: true,
+        title: true,
+        episodes: {
+          select: {
+            id: true,
+            episodeNumber: true,
+            title: true,
+          },
+          orderBy: { episodeNumber: "asc" }
         }
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { title: "asc" }
     });
+
+    if (user) {
+      myTracks = await prisma.audioTrack.findMany({
+        where: { creatorId: user.id },
+        include: {
+          episode: { include: { anime: true } }
+        },
+        orderBy: { createdAt: "desc" }
+      });
+    }
+  } catch (error) {
+    console.error("Prisma error in Fandub:", error);
+  }
+
+  if (animes.length === 0) {
+    animes = fallbackAnimes.map(a => ({
+      id: a.id,
+      title: a.title,
+      episodes: [{ id: `ep-fb-${a.id}`, episodeNumber: 1, title: "Mock Episode" }]
+    }));
   }
 
   return (
