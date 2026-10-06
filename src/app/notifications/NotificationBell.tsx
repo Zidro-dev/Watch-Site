@@ -16,6 +16,13 @@ export default function NotificationBell({ initialNotifications }: { initialNoti
     await markNotificationAsRead(id);
   };
 
+  const handleMarkAllRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    for (const notif of notifications) {
+      if (!notif.isRead) await markNotificationAsRead(notif.id);
+    }
+  };
+
   return (
     <div className="relative">
       <button 
@@ -31,11 +38,21 @@ export default function NotificationBell({ initialNotifications }: { initialNoti
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50">
           <div className="sticky top-0 bg-black/90 p-4 border-b border-white/10 flex justify-between items-center z-10">
-            <h3 className="font-bold text-white">Notifications</h3>
+            <h3 className="font-bold text-white flex items-center">
+              Notifications
+              {unreadCount > 0 && (
+                <span className="ml-2 text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+                  {unreadCount}
+                </span>
+              )}
+            </h3>
             {unreadCount > 0 && (
-              <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-semibold">
-                {unreadCount} New
-              </span>
+              <button 
+                onClick={handleMarkAllRead}
+                className="text-[10px] text-gray-400 hover:text-white transition-colors"
+              >
+                Mark all as read
+              </button>
             )}
           </div>
           

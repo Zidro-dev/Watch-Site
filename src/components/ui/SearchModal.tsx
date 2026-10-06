@@ -103,7 +103,14 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean, onCl
                 <Link
                   key={anime.id}
                   href={`/anime/${anime.id}`}
-                  onClick={onClose}
+                  onClick={(e) => {
+                    if (anime.source === "global") {
+                      e.preventDefault();
+                      alert("This anime is from MAL and hasn't been imported yet. Admins can import it via Dashboard.");
+                    } else {
+                      onClose();
+                    }
+                  }}
                   className="flex items-center p-3 rounded-xl hover:bg-white/10 transition-colors group"
                 >
                   <div className="relative w-16 h-20 rounded-md overflow-hidden bg-black/50 mr-4 flex-shrink-0">
@@ -120,10 +127,28 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean, onCl
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-white font-semibold truncate group-hover:text-primary transition-colors">{anime.title}</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {anime.releaseYear || "Unknown Year"} • <span className={anime.status === "ONGOING" ? "text-green-400" : "text-gray-400"}>{anime.status}</span>
+                    <h4 className="text-white font-semibold truncate group-hover:text-primary transition-colors flex items-center">
+                      {anime.title}
+                      {anime.source === "global" && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] bg-blue-600/20 text-blue-400 border border-blue-600/30 uppercase tracking-wider">
+                          MAL
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center space-x-2">
+                      <span>{anime.releaseYear || "N/A"}</span>
+                      <span>•</span>
+                      <span className={anime.status === "ONGOING" ? "text-green-400" : "text-gray-400"}>{anime.status}</span>
                     </p>
+                    {anime.tags && anime.tags.length > 0 && (
+                      <div className="flex gap-1 mt-1.5 overflow-hidden">
+                        {anime.tags.slice(0, 3).map((tag: string) => (
+                          <span key={tag} className="text-[10px] bg-white/5 px-2 py-0.5 rounded text-gray-400 truncate">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </Link>
               ))}
@@ -136,7 +161,7 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean, onCl
         </div>
         
         <div className="bg-black/50 px-4 py-3 border-t border-white/5 text-xs text-muted-foreground flex justify-between items-center">
-          <span>Search powered by AniZone</span>
+          <span>Search powered by AniZone & Jikan API</span>
           <span className="flex items-center space-x-1">
             <kbd className="bg-white/10 px-2 py-1 rounded text-[10px] font-mono">ESC</kbd> <span>to close</span>
           </span>

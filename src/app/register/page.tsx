@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { registerUser } from "../auth/actions";
+import { registerUser, demoLoginUser } from "../auth/actions";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Mic2, Shield } from "lucide-react";
 
 export default function RegisterPage() {
   const [isPending, setIsPending] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -23,8 +24,18 @@ export default function RegisterPage() {
     }
   };
 
+  const handleDemoLogin = async (role: "USER" | "CREATOR" | "ADMIN") => {
+    setDemoLoading(role);
+    setErrorMsg("");
+    const result = await demoLoginUser(role);
+    if (result?.error) {
+      setErrorMsg(result.error);
+      setDemoLoading(null);
+    }
+  };
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-black">
+    <div className="relative min-h-screen flex items-center justify-center bg-black py-12">
       {/* Background Image / Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -45,6 +56,44 @@ export default function RegisterPage() {
             {errorMsg}
           </div>
         )}
+        
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <button 
+            onClick={() => handleDemoLogin("USER")}
+            disabled={!!demoLoading || isPending}
+            className="flex flex-col items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg p-3 transition-colors disabled:opacity-50"
+          >
+            {demoLoading === "USER" ? <Loader2 className="w-5 h-5 mb-1 text-gray-400 animate-spin" /> : <User className="w-5 h-5 mb-1 text-gray-400" />}
+            <span className="text-xs text-gray-300 font-medium">Viewer</span>
+          </button>
+          
+          <button 
+            onClick={() => handleDemoLogin("CREATOR")}
+            disabled={!!demoLoading || isPending}
+            className="flex flex-col items-center justify-center bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg p-3 transition-colors disabled:opacity-50"
+          >
+            {demoLoading === "CREATOR" ? <Loader2 className="w-5 h-5 mb-1 text-primary animate-spin" /> : <Mic2 className="w-5 h-5 mb-1 text-primary" />}
+            <span className="text-xs text-primary font-medium">Creator</span>
+          </button>
+          
+          <button 
+            onClick={() => handleDemoLogin("ADMIN")}
+            disabled={!!demoLoading || isPending}
+            className="flex flex-col items-center justify-center bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg p-3 transition-colors disabled:opacity-50"
+          >
+            {demoLoading === "ADMIN" ? <Loader2 className="w-5 h-5 mb-1 text-blue-400 animate-spin" /> : <Shield className="w-5 h-5 mb-1 text-blue-400" />}
+            <span className="text-xs text-blue-400 font-medium">Admin</span>
+          </button>
+        </div>
+
+        <div className="relative mb-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10"></div>
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-black/80 px-2 text-gray-500 uppercase tracking-widest">or sign up with email</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -89,7 +138,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || !!demoLoading}
             className="w-full mt-6 bg-primary text-white font-bold py-3 rounded-md hover:bg-primary/90 transition flex items-center justify-center disabled:opacity-50"
           >
             {isPending ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}

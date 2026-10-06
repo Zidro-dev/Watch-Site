@@ -52,6 +52,29 @@ export default async function CatalogPage({
     totalCount = fallbackAnimes.length;
   }
 
+  // Jikan API Fallback for Global Catalog Search
+  if (query && animes.length < 5) {
+    try {
+      const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=${10 - animes.length}`);
+      const jikanData = await res.json();
+      
+      if (jikanData.data) {
+        const jikanFormatted = jikanData.data.map((a: any) => ({
+          id: `jikan-${a.mal_id}`,
+          title: a.title_english || a.title,
+          coverImage: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url,
+          releaseYear: a.year || (a.aired?.from ? new Date(a.aired.from).getFullYear() : 2024),
+          status: a.status === "Currently Airing" ? "ONGOING" : "COMPLETED",
+          isJikan: true
+        }));
+        animes = [...animes, ...jikanFormatted];
+        totalCount = animes.length;
+      }
+    } catch (error) {
+      console.error("Jikan API Error in Catalog:", error);
+    }
+  }
+
   const totalPages = Math.ceil(totalCount / take);
 
   // Form action for searching
@@ -64,7 +87,10 @@ export default async function CatalogPage({
   return (
     <div className="container mx-auto px-4 md:px-8 pt-24 pb-12 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4 border-b border-border pb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">Anime Catalog</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight flex items-center">
+          <span className="bg-primary w-2 h-8 rounded-full mr-3 inline-block"></span>
+          Anime Catalog
+        </h1>
         <form action={searchAction} className="relative w-full md:w-80">
           <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2">
             <Search className="h-5 w-5 text-muted-foreground hover:text-white transition-colors" />
@@ -73,7 +99,7 @@ export default async function CatalogPage({
             type="text"
             name="q"
             defaultValue={query}
-            placeholder="Search thousands of anime..."
+            placeholder="Search local DB & global MAL..."
             className="w-full pl-10 pr-4 py-3 bg-secondary/50 backdrop-blur-md border border-white/10 rounded-full text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary transition-shadow shadow-inner"
           />
         </form>

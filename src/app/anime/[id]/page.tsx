@@ -8,22 +8,37 @@ import { createClient } from "@/utils/supabase/server";
 import { WatchlistButton, ReviewsSection } from "./AnimeClientFeatures";
 import type { Metadata } from "next";
 
-
-
 import { fallbackAnimes } from "@/utils/fallback-data";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  let anime = null;
+  let anime: any = null;
   try {
-    anime = await prisma.anime.findUnique({
-      where: { id: params.id },
-    });
+    if (!params.id.startsWith("jikan-")) {
+      anime = await prisma.anime.findUnique({
+        where: { id: params.id },
+      });
+    }
   } catch (error) {
     console.error("Metadata prisma error in AnimeDetails:", error);
   }
 
-  if (!anime) {
+  if (!anime && !params.id.startsWith("jikan-")) {
     anime = fallbackAnimes.find(a => a.id === params.id) as any;
+  }
+
+  if (!anime && params.id.startsWith("jikan-")) {
+    const malId = params.id.replace("jikan-", "");
+    try {
+      const res = await fetch(`https://api.jikan.moe/v4/anime/${malId}`);
+      const data = await res.json();
+      if (data.data) {
+        anime = {
+          title: data.data.title_english || data.data.title,
+          description: data.data.synopsis,
+          coverImage: data.data.images?.jpg?.large_image_url || data.data.images?.jpg?.image_url,
+        };
+      }
+    } catch (e) { }
   }
 
   if (!anime) {
@@ -67,44 +82,69 @@ export default async function AnimeDetailsPage({ params }: { params: { id: strin
     console.error("Supabase user error in AnimeDetails:", error);
   }
 
-  let anime = null;
+  let anime: any = null;
   try {
-    anime = await prisma.anime.findUnique({
-      where: { id: params.id },
-      include: {
-        episodes: {
-          orderBy: { episodeNumber: "asc" }
-        },
-        reviews: {
-          include: { user: true },
-          orderBy: { createdAt: "desc" }
-        },
-        watchlists: user ? {
-          where: { userId: user.id }
-        } : false
-      }
-    });
+    if (!params.id.startsWith("jikan-")) {
+      anime = await prisma.anime.findUnique({
+        where: { id: params.id },
+        include: {
+          episodes: {
+            orderBy: { episodeNumber: "asc" }
+          },
+          reviews: {
+            include: { user: true },
+            orderBy: { createdAt: "desc" }
+          },
+          watchlists: user ? {
+            where: { userId: user.id }
+          } : false
+        }
+      });
+    }
   } catch (error) {
     console.error("Prisma error in AnimeDetails:", error);
   }
 
-  if (!anime) {
+  if (!anime && !params.id.startsWith("jikan-")) {
     anime = fallbackAnimes.find(a => a.id === params.id) as any;
     if (anime) {
-      anime.episodes = [{ id: `ep-fb-${anime.id}`, episodeNumber: 1, title: "Mock Episode" }];
-      anime.reviews = [];
-      anime.watchlists = [];
-    } else {
-      // Just fallback to the first one to avoid 404 crash
-      anime = { ...fallbackAnimes[0] } as any;
       anime.episodes = [{ id: `ep-fb-${anime.id}`, episodeNumber: 1, title: "Mock Episode" }];
       anime.reviews = [];
       anime.watchlists = [];
     }
   }
 
+  if (!anime && params.id.startsWith("jikan-")) {
+    const malId = params.id.replace("jikan-", "");
+    try {
+      const res = await fetch(`https://api.jikan.moe/v4/anime/${malId}`);
+      const data = await res.json();
+      if (data.data) {
+        const a = data.data;
+        anime = {
+          id: params.id,
+          title: a.title_english || a.title,
+          description: a.synopsis || "No description available.",
+          coverImage: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url,
+          releaseYear: a.year || (a.aired?.from ? new Date(a.aired.from).getFullYear() : 2024),
+          status: a.status === "Currently Airing" ? "ONGOING" : "COMPLETED",
+          tags: a.genres?.map((g: any) => g.name) || [],
+          episodes: [],
+          reviews: [],
+          watchlists: []
+        };
+      }
+    } catch (e) {
+      console.error("Jikan API error in AnimeDetails:", e);
+    }
+  }
+
   if (!anime) {
-    notFound();
+    // Just fallback to the first one to avoid 404 crash entirely if something is really wrong
+    anime = { ...fallbackAnimes[0] } as any;
+    anime.episodes = [{ id: `ep-fb-${anime.id}`, episodeNumber: 1, title: "Mock Episode" }];
+    anime.reviews = [];
+    anime.watchlists = [];
   }
 
   const isWatchlisted = user && anime.watchlists ? anime.watchlists.length > 0 : false;
@@ -130,12 +170,26 @@ export default async function AnimeDetailsPage({ params }: { params: { id: strin
               className="w-48 md:w-64 aspect-[2/3] object-cover rounded-xl shadow-2xl border border-white/10 shrink-0 transform md:translate-y-12"
             />
             <div className="flex-1 pb-2">
-              <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4">{anime.title}</h1>
+              <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4 flex items-center">
+                {anime.title}
+                {params.id.startsWith("jikan-") && (
+                  <span className="ml-4 px-2 py-1 text-sm bg-blue-600/20 text-blue-400 border border-blue-600/30 rounded uppercase tracking-wider">
+                    MAL Global
+                  </span>
+                )}
+              </h1>
               <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-300 mb-6">
                 <span className="flex items-center"><Calendar className="h-4 w-4 mr-1.5" /> {anime.releaseYear}</span>
                 <span className="bg-primary/20 text-primary border border-primary/30 px-2.5 py-0.5 rounded-full uppercase text-xs tracking-wider">
                   {anime.status}
                 </span>
+                {anime.tags && anime.tags.length > 0 && (
+                  <div className="flex gap-2">
+                    {anime.tags.slice(0, 3).map((tag: string) => (
+                      <span key={tag} className="text-gray-400 border border-gray-700 px-2 py-0.5 rounded text-xs">{tag}</span>
+                    ))}
+                  </div>
+                )}
               </div>
               <p className="text-gray-400 text-lg max-w-3xl leading-relaxed line-clamp-3 md:line-clamp-none mb-8">
                 {anime.description || "No description available."}
@@ -152,7 +206,7 @@ export default async function AnimeDetailsPage({ params }: { params: { id: strin
                   </Link>
                 ) : (
                   <span className="w-full sm:w-auto inline-flex items-center justify-center bg-white/20 text-white font-bold py-3 px-8 rounded-full cursor-not-allowed">
-                    Coming Soon
+                    {params.id.startsWith("jikan-") ? "Not Imported Yet" : "Coming Soon"}
                   </span>
                 )}
                 
@@ -176,11 +230,15 @@ export default async function AnimeDetailsPage({ params }: { params: { id: strin
         
         {anime.episodes.length === 0 ? (
           <div className="text-center py-16 bg-secondary/30 rounded-xl border border-border">
-            <p className="text-muted-foreground">No episodes available yet.</p>
+            <p className="text-muted-foreground">
+              {params.id.startsWith("jikan-") 
+                ? "This anime is from the global database and hasn't been imported into AniZone yet."
+                : "No episodes available yet."}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {anime.episodes.map(episode => (
+            {anime.episodes.map((episode: any) => (
               <Link 
                 key={episode.id} 
                 href={`/watch/${episode.id}`}
@@ -200,11 +258,13 @@ export default async function AnimeDetailsPage({ params }: { params: { id: strin
           </div>
         )}
 
-        <ReviewsSection 
-          userId={user?.id || null} 
-          animeId={anime.id} 
-          existingReviews={anime.reviews} 
-        />
+        {!params.id.startsWith("jikan-") && (
+          <ReviewsSection 
+            userId={user?.id || null} 
+            animeId={anime.id} 
+            existingReviews={anime.reviews} 
+          />
+        )}
       </div>
     </div>
   );

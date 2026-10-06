@@ -2,10 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import Hero from "@/components/home/Hero";
 import CategoryRow from "@/components/home/CategoryRow";
+import AiRecommender from "@/components/home/AiRecommender";
 import { prisma } from "@/utils/prisma";
 import { createClient } from "@/utils/supabase/server";
-
-
 
 import { fallbackAnimes, fallbackWatchProgress } from "@/utils/fallback-data";
 
@@ -87,6 +86,8 @@ export default async function Home() {
         )}
         
         <CategoryRow title="Newly Added" items={formatAnime(newlyAdded)} />
+        
+        <AiRecommender />
         
         <CategoryRow title="Top Rated & Popular" items={formatAnime(topRated)} />
         
