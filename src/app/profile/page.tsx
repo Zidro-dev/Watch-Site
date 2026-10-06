@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { User as UserIcon, Mail, Shield, Crown, Film } from "lucide-react";
 import Link from "next/link";
 import AvatarUploadClient from "./AvatarUploadClient";
+import ProfileGamification from "./ProfileGamification";
 
 
 
@@ -119,8 +120,11 @@ export default async function ProfilePage() {
             </div>
           </div>
 
+          {/* Gamification Section */}
+          <ProfileGamification />
+
           {/* Recent Watchlist */}
-          <div>
+          <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold">Recent Watchlist</h3>
               <Link href="/watchlist" className="text-sm text-primary hover:underline">View All</Link>

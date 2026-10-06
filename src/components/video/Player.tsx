@@ -1,146 +1,168 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, Settings, Maximize, FastForward, SkipForward } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize, Settings, SkipForward, FastForward, Keyboard } from "lucide-react";
 import Link from "next/link";
 
-interface Track {
+type AudioTrack = {
   id: string;
   language: string;
   url: string;
-  source?: string;
-}
+  source: string;
+};
 
-interface PlayerProps {
+type SubtitleTrack = {
+  id: string;
+  language: string;
+  url: string;
+};
+
+type PlayerProps = {
   videoUrl: string;
-  audioTracks: Track[];
-  subtitleTracks: Track[];
+  audioTracks?: AudioTrack[];
+  subtitleTracks?: SubtitleTrack[];
   initialTime?: number;
   onProgressSave?: (time: number) => void;
   nextEpisodeUrl?: string;
-}
+  flyingEmojis?: { id: number; emoji: string; x: number }[];
+};
 
-export default function Player({ videoUrl, audioTracks, subtitleTracks, initialTime = 0, onProgressSave, nextEpisodeUrl }: PlayerProps) {
+export default function Player({ 
+  videoUrl, 
+  audioTracks = [], 
+  subtitleTracks = [], 
+  initialTime = 0,
+  onProgressSave,
+  nextEpisodeUrl,
+  flyingEmojis = []
+}: PlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [showSkipIntro, setShowSkipIntro] = useState(false);
+  const [selectedAudioId, setSelectedAudioId] = useState("base");
+  const [selectedSubId, setSelectedSubId] = useState(subtitleTracks.length > 0 ? subtitleTracks[0].id : "none");
   
-  // Track Selection State
-  const [selectedAudioId, setSelectedAudioId] = useState<string>("base");
-  const [selectedSubId, setSelectedSubId] = useState<string>("none");
-  const [quality, setQuality] = useState<string>("1080p");
+  const [quality, setQuality] = useState("Auto");
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showShortcutsMenu, setShowShortcutsMenu] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
-  // Syncing external audio track with video
+  // Sync initial time
   useEffect(() => {
-    if (!videoRef.current || !audioRef.current) return;
-    const video = videoRef.current;
-    const audio = audioRef.current;
-
-    const syncAudio = () => {
-      if (Math.abs(audio.currentTime - video.currentTime) > 0.2) {
-        audio.currentTime = video.currentTime;
-      }
-    };
-
-    const handlePlay = () => {
-      if (selectedAudioId !== "base") {
-        audio.play().catch(console.error);
-        video.muted = true;
-      } else {
-        video.muted = false;
-        audio.pause();
-      }
-    };
-
-    const handlePause = () => audio.pause();
-    const handleSeek = () => { audio.currentTime = video.currentTime; };
-
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("seeking", handleSeek);
-    video.addEventListener("timeupdate", syncAudio);
-
-    return () => {
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("seeking", handleSeek);
-      video.removeEventListener("timeupdate", syncAudio);
-    };
-  }, [selectedAudioId]);
-
-  // Set initial time on mount
-  useEffect(() => {
-    if (videoRef.current) {
-      // Check local storage as a fallback for guests
-      let startAt = initialTime;
-      if (initialTime === 0) {
-        const localProg = localStorage.getItem(`progress_${videoUrl}`);
-        if (localProg) startAt = parseFloat(localProg);
-      }
-
-      const handleLoadedMetadata = () => {
-        if (videoRef.current && startAt > 0) {
-          videoRef.current.currentTime = startAt;
-        }
-      };
-      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
-      return () => {
-        if (videoRef.current) videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      };
+    if (videoRef.current && initialTime > 0) {
+      videoRef.current.currentTime = initialTime;
     }
-  }, [initialTime, videoUrl]);
-
-  // Handle saving progress and Skip Intro button
-  const lastSavedTime = useRef<number>(0);
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const current = videoRef.current.currentTime;
-      setProgress((current / videoRef.current.duration) * 100);
-      
-      // Show skip intro button between 10s and 95s
-      setShowSkipIntro(current > 10 && current < 95);
-
-      if (current - lastSavedTime.current > 5) {
-        lastSavedTime.current = current;
-        // Save to local storage
-        localStorage.setItem(`progress_${videoUrl}`, current.toString());
-        // Save to API
-        if (onProgressSave) onProgressSave(current);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (selectedAudioId !== "base" && audioRef.current && videoRef.current) {
-      const selectedTrack = audioTracks.find(t => t.id === selectedAudioId);
-      if (selectedTrack) {
-        audioRef.current.src = selectedTrack.url;
-        audioRef.current.currentTime = videoRef.current.currentTime;
-        audioRef.current.playbackRate = playbackSpeed;
-        if (!videoRef.current.paused) {
-          audioRef.current.play().catch(console.error);
-        }
-      }
-    } else if (videoRef.current) {
-      videoRef.current.muted = false;
-      if (audioRef.current) audioRef.current.pause();
-    }
-  }, [selectedAudioId, audioTracks, playbackSpeed]);
+  }, [initialTime]);
 
   const togglePlay = () => {
     if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-      } else {
+      if (isPlaying) {
         videoRef.current.pause();
-        setIsPlaying(false);
+        if (audioRef.current && selectedAudioId !== "base") audioRef.current.pause();
+      } else {
+        videoRef.current.play();
+        if (audioRef.current && selectedAudioId !== "base") audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      if (audioRef.current) audioRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    const container = document.getElementById("player-container");
+    if (container) {
+      if (!document.fullscreenElement) container.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  };
+
+  const skipTime = (amount: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += amount;
+      if (audioRef.current) audioRef.current.currentTime += amount;
+    }
+  };
+
+  // Keyboard Shortcuts Hook
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+      switch(e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'f':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'm':
+          e.preventDefault();
+          toggleMute();
+          break;
+        case 'arrowright':
+          e.preventDefault();
+          skipTime(10);
+          break;
+        case 'arrowleft':
+          e.preventDefault();
+          skipTime(-10);
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, isMuted]);
+
+  // Audio track syncing logic
+  useEffect(() => {
+    if (selectedAudioId === "base") {
+      if (videoRef.current) videoRef.current.muted = isMuted;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    } else {
+      const track = audioTracks.find(t => t.id === selectedAudioId);
+      if (track && videoRef.current && audioRef.current) {
+        videoRef.current.muted = true;
+        audioRef.current.src = track.url;
+        audioRef.current.currentTime = videoRef.current.currentTime;
+        audioRef.current.muted = isMuted;
+        if (isPlaying) audioRef.current.play();
+      }
+    }
+  }, [selectedAudioId, audioTracks, isPlaying, isMuted]);
+
+  // Constantly sync custom audio if it drifts
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const percent = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setProgress(percent);
+
+      if (audioRef.current && selectedAudioId !== "base") {
+        if (Math.abs(audioRef.current.currentTime - videoRef.current.currentTime) > 0.3) {
+          audioRef.current.currentTime = videoRef.current.currentTime;
+        }
+      }
+
+      // Save progress periodically (e.g. every 10s)
+      if (onProgressSave && Math.floor(videoRef.current.currentTime) % 10 === 0) {
+        onProgressSave(videoRef.current.currentTime);
       }
     }
   };
@@ -151,20 +173,19 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
     if (audioRef.current) audioRef.current.playbackRate = speed;
   };
 
-  const skipIntro = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += 85;
-      setShowSkipIntro(false);
-    }
-  };
+  const skipIntro = () => skipTime(85);
+
+  const showSkipIntro = videoRef.current && videoRef.current.currentTime > 10 && videoRef.current.currentTime < 180;
 
   return (
     <div 
-      className="relative group w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center font-sans"
+      id="player-container"
+      className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl group"
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => {
         setShowControls(false);
         setShowSettingsMenu(false);
+        setShowShortcutsMenu(false);
       }}
     >
       <video
@@ -189,6 +210,17 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
 
       <audio ref={audioRef} />
 
+      {/* Flying Emojis overlay for Watch Party */}
+      {flyingEmojis.map((emojiObj) => (
+        <div
+          key={emojiObj.id}
+          className="absolute bottom-16 text-3xl pointer-events-none animate-bounce z-30"
+          style={{ left: `${emojiObj.x}%` }}
+        >
+          {emojiObj.emoji}
+        </div>
+      ))}
+
       {/* Skip Intro Button */}
       {showSkipIntro && (
         <button 
@@ -202,7 +234,7 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
 
       {/* Controls Overlay */}
       <div 
-        className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}
+        className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"} z-40`}
       >
         <div className="w-full h-1 bg-white/30 mb-4 cursor-pointer relative rounded">
           <div 
@@ -223,8 +255,8 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
               </Link>
             )}
 
-            <button className="text-white hover:text-primary transition hidden sm:block">
-              <Volume2 className="w-6 h-6" />
+            <button onClick={toggleMute} className="text-white hover:text-primary transition hidden sm:block">
+              {isMuted ? <VolumeX className="w-6 h-6 text-red-500" /> : <Volume2 className="w-6 h-6" />}
             </button>
           </div>
 
@@ -246,6 +278,28 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Shortcuts Help */}
+            <div className="relative hidden md:block">
+              <button 
+                onClick={() => setShowShortcutsMenu(!showShortcutsMenu)}
+                className={`text-white hover:text-primary transition p-1 ${showShortcutsMenu ? 'text-primary' : ''}`}
+                title="Keyboard Shortcuts"
+              >
+                <Keyboard className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+              {showShortcutsMenu && (
+                <div className="absolute bottom-full right-1/2 translate-x-1/2 mb-4 bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl w-48 p-4 z-50 text-xs">
+                  <p className="font-bold text-gray-300 mb-3 border-b border-white/10 pb-2">Keyboard Shortcuts</p>
+                  <ul className="space-y-2 text-gray-400">
+                    <li className="flex justify-between"><span>Space / K</span> <span className="font-mono bg-white/10 px-1 rounded text-white">Play/Pause</span></li>
+                    <li className="flex justify-between"><span>F</span> <span className="font-mono bg-white/10 px-1 rounded text-white">Fullscreen</span></li>
+                    <li className="flex justify-between"><span>M</span> <span className="font-mono bg-white/10 px-1 rounded text-white">Mute</span></li>
+                    <li className="flex justify-between"><span>← / →</span> <span className="font-mono bg-white/10 px-1 rounded text-white">-10s / +10s</span></li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Main Settings Menu */}
@@ -322,7 +376,7 @@ export default function Player({ videoUrl, audioTracks, subtitleTracks, initialT
               )}
             </div>
 
-            <button className="text-white hover:text-primary transition">
+            <button onClick={toggleFullscreen} className="text-white hover:text-primary transition">
               <Maximize className="w-5 h-5 md:w-6 md:h-6" />
             </button>
           </div>

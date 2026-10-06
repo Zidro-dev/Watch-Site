@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter, usePathname } from "next/navigation";
 import NotificationBell from "@/app/notifications/NotificationBell";
+import { useGamification } from "./GamificationProvider";
 
 export default function Navbar({ user, dbUser, notifications = [] }: { user: any, dbUser?: any, notifications?: any[] }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -13,6 +14,7 @@ export default function Navbar({ user, dbUser, notifications = [] }: { user: any
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { xp, rankName } = useGamification();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,6 +106,17 @@ export default function Navbar({ user, dbUser, notifications = [] }: { user: any
                   <div className="px-4 py-2 border-b border-white/10 mb-1">
                     <p className="text-sm font-medium text-white truncate">{dbUser?.fullName || user.email}</p>
                     <p className="text-xs text-primary font-bold mt-1 uppercase tracking-wider">{dbUser?.role || "USER"}</p>
+                    
+                    {/* Gamification Rank */}
+                    <div className="mt-2 pt-2 border-t border-white/5">
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="text-yellow-500 font-bold">{rankName}</span>
+                        <span className="text-gray-400">{xp} XP</span>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5">
+                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (xp % 1000) / 10)}%` }}></div>
+                      </div>
+                    </div>
                   </div>
                   <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition">
                     My Profile

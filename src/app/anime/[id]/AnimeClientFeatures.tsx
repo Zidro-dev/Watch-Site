@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { toggleWatchlist, submitReview } from "./actions";
-import { Bookmark, BookmarkCheck, Star, Loader2, Send, Eye, Check, Heart, ListPlus } from "lucide-react";
+import { Bookmark, BookmarkCheck, Star, Loader2, Send, Eye, Check, Heart, ListPlus, Flame } from "lucide-react";
+import { useGamification } from "@/components/layout/GamificationProvider";
 
 export function WatchlistButton({ userId, animeId, initialIsWatchlisted }: { userId: string | null, animeId: string, initialIsWatchlisted: boolean }) {
   const [isWatchlisted, setIsWatchlisted] = useState(initialIsWatchlisted);
   const [status, setStatus] = useState<"PLAN_TO_WATCH" | "WATCHING" | "COMPLETED" | "FAVORITE" | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const { addXp } = useGamification();
 
   useEffect(() => {
     // Load local status for guests
@@ -22,10 +24,15 @@ export function WatchlistButton({ userId, animeId, initialIsWatchlisted }: { use
   }, [userId, animeId]);
 
   const handleToggle = async (newStatus: "PLAN_TO_WATCH" | "WATCHING" | "COMPLETED" | "FAVORITE") => {
+    const wasWatchlisted = isWatchlisted;
     setIsPending(true);
     setStatus(newStatus);
     setIsWatchlisted(true);
     setShowDropdown(false);
+
+    if (!wasWatchlisted) {
+      addXp(30, "Added to Watchlist");
+    }
 
     if (userId) {
       // Real API call (we will reuse toggleWatchlist or an updated version)
@@ -98,6 +105,7 @@ export function ReviewsSection({ userId, animeId, existingReviews }: { userId: s
   const [comment, setComment] = useState("");
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addXp } = useGamification();
   
   // Local state for optimistic UI or guest reviews
   const [localReviews, setLocalReviews] = useState<any[]>(existingReviews);
@@ -126,6 +134,7 @@ export function ReviewsSection({ userId, animeId, existingReviews }: { userId: s
       const result = await submitReview(formData);
       if (result.success) {
         setLocalReviews([newReview, ...localReviews]);
+        addXp(100, "Wrote a review");
       }
     } else {
       // LocalStorage for guests
@@ -133,6 +142,7 @@ export function ReviewsSection({ userId, animeId, existingReviews }: { userId: s
       guestReviews.unshift(newReview);
       localStorage.setItem(`anizone_reviews_${animeId}`, JSON.stringify(guestReviews));
       setLocalReviews([newReview, ...localReviews]);
+      addXp(100, "Wrote a review");
     }
 
     setComment("");

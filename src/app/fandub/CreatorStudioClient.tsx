@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import FandubCreatorForm from "./FandubCreatorForm";
-import { List, Plus, CheckCircle2, Clock, XCircle, Bot, Wand2, FileText, Download } from "lucide-react";
+import { List, Plus, CheckCircle2, Clock, XCircle, Bot, Wand2, FileText, Download, Coffee } from "lucide-react";
 
 export default function CreatorStudioClient({ animes, userId, myTracks }: { animes: any[], userId: string, myTracks: any[] }) {
   const [activeTab, setActiveTab] = useState<"dashboard" | "submit" | "ai-sub">("dashboard");
@@ -91,7 +91,19 @@ export default function CreatorStudioClient({ animes, userId, myTracks }: { anim
       <div className="p-6 md:p-10">
         {activeTab === "dashboard" ? (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Your Submissions</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+              <h2 className="text-2xl font-bold">Your Submissions</h2>
+              <button 
+                onClick={() => {
+                  const amt = prompt("Enter tip/donation amount to support fellow creators ($):", "5");
+                  if (amt) alert(`Awesome! You just sent $${amt} to support the Creator Community!`);
+                }}
+                className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-500 border border-yellow-500/50 font-bold py-2 px-4 rounded-lg flex items-center transition-colors text-sm mt-4 sm:mt-0"
+              >
+                <Coffee className="w-4 h-4 mr-2" />
+                Tip Creators / Donate
+              </button>
+            </div>
             {myTracks.length === 0 ? (
               <div className="text-center py-10 bg-white/5 rounded-xl border border-white/10">
                 <p className="text-gray-400">You haven't submitted any tracks yet.</p>

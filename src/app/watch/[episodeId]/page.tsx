@@ -148,6 +148,7 @@ export default async function WatchPage({ params }: { params: { episodeId: strin
           tracks={tracks} 
           initialProgress={initialProgress}
           nextEpisodeUrl={nextEpisodeUrl}
+          user={user}
         />
       </div>
     </div>
