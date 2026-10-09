@@ -63,6 +63,7 @@ export default function Navbar({ user, dbUser, notifications = [] }: { user: any
           <Link href="/catalog" className="transition-colors hover:text-white text-gray-300">Catalog</Link>
           <Link href="/simulcast" className="transition-colors hover:text-white text-gray-300">Simulcast</Link>
           <Link href="/fandub" className="transition-colors hover:text-white text-gray-300">Fandub Portal</Link>
+          <Link href="/games/word-search" className="transition-colors hover:text-white text-gray-300">Games</Link>
           {user && (
             <Link href="/watchlist" className="transition-colors hover:text-white text-gray-300">My List</Link>
           )}
@@ -155,6 +156,7 @@ export default function Navbar({ user, dbUser, notifications = [] }: { user: any
           <Link href="/catalog" className="text-white font-medium hover:text-primary transition">Catalog</Link>
           <Link href="/simulcast" className="text-white font-medium hover:text-primary transition">Simulcast</Link>
           <Link href="/fandub" className="text-white font-medium hover:text-primary transition">Fandub Portal</Link>
+          <Link href="/games/word-search" className="text-white font-medium hover:text-primary transition">Games</Link>
           {user && (
             <Link href="/watchlist" className="text-white font-medium hover:text-primary transition">My List</Link>
           )}

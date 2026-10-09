@@ -25,11 +25,11 @@ export default function Hero() {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 opacity-50 transform scale-110">
           {collageImages.map((src, idx) => (
             <div key={idx} className="aspect-[3/4] w-full relative">
-              <Image
+              <img
                 src={src}
                 alt={`Anime cover ${idx}`}
-                fill
-                className="object-cover rounded-md"
+                className="w-full h-full object-cover absolute inset-0"
+                
                 sizes="(max-width: 768px) 33vw, (max-width: 1200px) 20vw, 16vw"
               />
             </div>
@@ -37,11 +37,11 @@ export default function Hero() {
           {/* Duplicate for density if needed */}
           {collageImages.map((src, idx) => (
             <div key={`dup-${idx}`} className="aspect-[3/4] w-full hidden md:block relative">
-              <Image
+              <img
                 src={src}
                 alt={`Anime cover ${idx} duplicate`}
-                fill
-                className="object-cover rounded-md"
+                className="w-full h-full object-cover absolute inset-0"
+                
                 sizes="(max-width: 768px) 33vw, (max-width: 1200px) 20vw, 16vw"
               />
             </div>

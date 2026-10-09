@@ -115,10 +115,10 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean, onCl
                 >
                   <div className="relative w-16 h-20 rounded-md overflow-hidden bg-black/50 mr-4 flex-shrink-0">
                     {anime.coverImage ? (
-                      <Image 
+                      <img 
                         src={anime.coverImage}
                         alt={anime.title}
-                        fill
+                        className="w-full h-full object-cover absolute inset-0"
                         className="object-cover"
                         sizes="64px"
                       />

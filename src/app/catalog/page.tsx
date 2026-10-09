@@ -115,12 +115,10 @@ export default async function CatalogPage({
             {animes.map((anime) => (
               <Link key={anime.id} href={`/anime/${anime.id}`} className="group relative block overflow-hidden rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(229,9,20,0.3)] hover:-translate-y-1 bg-secondary border border-border">
                 <div className="aspect-[2/3] w-full relative">
-                  <Image 
+                  <img 
                     src={anime.coverImage || "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=400&auto=format&fit=crop"} 
                     alt={anime.title} 
-                    fill
-                    className="object-cover" 
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    className="w-full h-full object-cover" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">

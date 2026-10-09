@@ -39,6 +39,8 @@ model User {
   watchlists   Watchlist[]
   reviews      Review[]
   notifications Notification[]
+  puzzles      Puzzle[]
+  gameSessions GameSession[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 }
@@ -158,3 +160,37 @@ model SubtitleTrack {
 }
 
 
+
+model Puzzle {
+  id                String        @id @default(uuid())
+  title             String
+  gridSize          Int
+  allowedDirections String[]
+  authorId          String?
+  author            User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt         DateTime      @default(now())
+  words             WordItem[]
+  gameSessions      GameSession[]
+}
+
+model WordItem {
+  id       String @id @default(uuid())
+  puzzleId String
+  puzzle   Puzzle @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+  word     String
+  startX   Int
+  startY   Int
+  endX     Int
+  endY     Int
+}
+
+model GameSession {
+  id               String   @id @default(uuid())
+  puzzleId         String
+  puzzle           Puzzle   @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+  playerId         String
+  player           User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  timeSpentSeconds Int
+  isCompleted      Boolean
+  createdAt        DateTime @default(now())
+}

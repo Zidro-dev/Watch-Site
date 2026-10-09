@@ -60,12 +60,10 @@ export default function CategoryRow({ title, items }: CategoryRowProps) {
           {items.map((item) => (
             <Link key={item.id} href={`/anime/${item.id}`}>
               <div className="relative h-36 min-w-[240px] cursor-pointer transition-transform duration-200 ease-out md:h-40 md:min-w-[280px] hover:scale-105 hover:z-30 rounded-md overflow-hidden bg-secondary">
-                <Image
+                <img
                   src={item.coverImage}
                   alt={item.title}
-                  fill
-                  className="rounded-md object-cover"
-                  sizes="(max-width: 768px) 240px, 280px"
+                  className="rounded-md object-cover w-full h-full absolute inset-0"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                   <h3 className="font-bold text-sm line-clamp-1">{item.title}</h3>

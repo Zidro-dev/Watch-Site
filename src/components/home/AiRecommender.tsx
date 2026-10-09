@@ -72,7 +72,7 @@ export default function AiRecommender() {
                 {recommendations.map(anime => (
                   <Link key={anime.id} href={`/anime/${anime.id}`} className="group relative bg-black/40 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition">
                     <div className="aspect-[3/4] relative">
-                      <Image src={anime.coverImage} alt={anime.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={anime.coverImage} alt={anime.title} className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                       <div className="absolute top-2 right-2 bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
                         {anime.match} Match
